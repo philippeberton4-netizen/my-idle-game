@@ -3,161 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kamas Idle</title>
-<style>
-:root{--bg:#1c2a1f;--panel:#25382a;--card:#2f4635;--gold:#f2c14e;--text:#f1ecd9;--muted:#a9b79f}
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--text)}
-header{text-align:center;padding:1rem 1rem .2rem}
-h1{margin:0;color:var(--gold)} .sub{color:var(--muted);font-size:.85rem}
-main{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:1000px;margin:1rem auto;padding:0 1rem}
-@media(max-width:700px){main{grid-template-columns:1fr}}
-section{background:var(--panel);border-radius:12px;padding:1rem}
-#left{text-align:center}
-#kamas{font-size:2.6rem;font-weight:700;color:var(--gold)}
-#cps{color:var(--muted);margin-bottom:1rem}
-#monster{font-size:8rem;line-height:1;background:none;border:none;cursor:pointer;user-select:none;transition:transform .08s}
-#monster:active{transform:scale(.9)}
-#info,#offline{color:var(--muted);font-size:.9rem;margin-top:.5rem}
-h2{margin:.2rem 0 .6rem;font-size:1.1rem}
-.item{display:flex;align-items:center;gap:.7rem;width:100%;margin-bottom:.5rem;padding:.6rem;background:var(--card);color:var(--text);border:1px solid transparent;border-radius:8px;cursor:pointer;text-align:left;font:inherit}
-.item:hover:not(:disabled){border-color:var(--gold)}
-.item:disabled{opacity:.5;cursor:not-allowed}
-.ico{font-size:1.8rem}
-.txt{flex:1;display:flex;flex-direction:column} .txt small{color:var(--muted)}
-.side{text-align:right;display:flex;flex-direction:column}
-.price{color:var(--gold);font-weight:600} .owned{font-size:1.2rem;font-weight:700}
-.float{position:fixed;pointer-events:none;color:var(--gold);font-weight:700;animation:up .8s forwards}
-@keyframes up{to{transform:translateY(-50px);opacity:0}}
-footer{text-align:center;color:var(--muted);font-size:.75rem;padding:1rem}
-footer button{background:none;border:1px solid var(--muted);color:var(--muted);border-radius:6px;cursor:pointer;margin-top:.5rem}
-</style>
+<title>Idle Amakna</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header><h1>Kamas Idle</h1><div class="sub">Un idle game inspiré de l'univers de Dofus</div></header>
-<main>
-  <section id="left">
-    <div id="kamas">0</div><div id="cps"></div>
-    <button id="monster" aria-label="Frapper le monstre">🐑</button>
-    <div id="info"></div><div id="offline"></div>
-  </section>
-  <section id="right">
-    <h2>Améliorations</h2><div id="ups"></div>
-    <h2>Monstres au travail</h2><div id="gens"></div>
-  </section>
-</main>
-<footer>
-  Fan game non officiel, sans lien avec Ankama. Dofus est une marque d'Ankama.<br>
-  <button id="reset">Réinitialiser la sauvegarde</button>
-</footer>
+<div id="app">
+  <header id="topbar">
+    <div class="brand">Idle Amakna</div>
+    <div class="res"><span>💰 <b id="res-kamas"></b> Kamas</span><span>⭐ <b id="res-xp"></b> XP</span></div>
+  </header>
 
-<script>
-// ====== ÉQUILIBRAGE : tout se règle ici ======
-const SAVE_KEY = 'kamasIdle_v1';
-const COST_GROWTH = 1.15;     // hausse du prix à chaque achat
-const OFFLINE_CAP_H = 12;     // heures max de gains hors-ligne
+  <nav id="menu"></nav>
 
-// Générateurs : base = prix de départ, cps = Kamas/s par unité
-const GENERATORS = [
-  { id:'piou',   name:'Piou',         icon:'🐤', base:15,      cps:0.1 },
-  { id:'tofu',   name:'Tofu',         icon:'🐦', base:100,     cps:1 },
-  { id:'bouftou',name:'Bouftou',      icon:'🐑', base:1100,    cps:8 },
-  { id:'arakne', name:'Arakne',       icon:'🕷️', base:12000,   cps:47 },
-  { id:'sanglier',name:'Sanglier',    icon:'🐗', base:130000,  cps:260 },
-  { id:'bwork',  name:'Bwork',        icon:'👹', base:1400000, cps:1400 },
-  { id:'dragon', name:'Dragon Cochon',icon:'🐉', base:20000000,cps:7800 }
-];
-// Améliorations : type 'click' (x gain par clic) ou 'global' (x production)
-const UPGRADES = [
-  { id:'c1', name:'Coup renforcé',      desc:'Gain par clic ×2',   cost:100,     type:'click',  mult:2 },
-  { id:'c2', name:'Coup critique',      desc:'Gain par clic ×2',   cost:2000,    type:'click',  mult:2 },
-  { id:'c3', name:'Maîtrise des armes', desc:'Gain par clic ×2',   cost:50000,   type:'click',  mult:2 },
-  { id:'d1', name:'Dofus Turquoise',    desc:'Production ×1,5',    cost:10000,   type:'global', mult:1.5 },
-  { id:'d2', name:'Dofus Émeraude',     desc:'Production ×1,5',    cost:250000,  type:'global', mult:1.5 },
-  { id:'d3', name:'Dofus Pourpre',      desc:'Production ×1,5',    cost:5000000, type:'global', mult:1.5 },
-  { id:'d4', name:'Dofus Ocre',         desc:'Production ×1,5',    cost:100000000,type:'global',mult:1.5 }
-];
-// =============================================
+  <main id="main">
+    <section class="view active" id="view-combat">
+      <div id="charpanel" class="panel"></div>
+      <div>
+        <div class="panel zonebar"><b id="zone-name"></b><span id="zone-room"></span></div>
+        <div id="scene"><div class="team" id="allies"></div><div class="team" id="enemies"></div></div>
+        <div class="panel turn"><span>PA <b>6</b> / 6</span><div class="bar"><i id="turn-fill"></i></div></div>
+        <div class="panel"><h3>Journal de combat</h3><div id="log"></div></div>
+      </div>
+    </section>
+  </main>
 
-let S = { kamas:0, total:0, gens:{}, ups:{}, last:Date.now() };
-try { const r = localStorage.getItem(SAVE_KEY); if (r) S = Object.assign(S, JSON.parse(r)); } catch(e) {}
+  <aside id="side">
+    <div class="panel"><h3>Session</h3><div id="session"></div></div>
+    <div class="panel"><h3>Derniers drops</h3><ul id="drops"></ul></div>
+  </aside>
 
-const SUF = ['','K','M','Md','B','Bd'];
-function fmt(n){
-  if (n < 1000) return (n < 10 ? Math.round(n*10)/10 : Math.floor(n)).toString().replace('.',',');
-  let i = 0; while (n >= 1000 && i < SUF.length-1) { n /= 1000; i++; }
-  return n.toFixed(n < 10 ? 2 : n < 100 ? 1 : 0).replace('.',',') + SUF[i];
-}
-const count = id => S.gens[id] || 0;
-const has = id => !!S.ups[id];
-const mult = t => UPGRADES.filter(u => u.type===t && has(u.id)).reduce((m,u) => m*u.mult, 1);
-const cost = g => Math.ceil(g.base * Math.pow(COST_GROWTH, count(g.id)));
-const cps = () => GENERATORS.reduce((s,g) => s + count(g.id)*g.cps, 0) * mult('global');
-const clickValue = () => mult('click');
-const $ = id => document.getElementById(id);
-
-// Gains hors-ligne
-const away = Math.min((Date.now() - S.last)/1000, OFFLINE_CAP_H*3600);
-if (away > 60 && cps() > 0) {
-  const g = away * cps(); S.kamas += g; S.total += g;
-  $('offline').textContent = 'Pendant ton absence : +' + fmt(g) + ' Kamas';
-}
-
-// Construction de l'interface (une seule fois)
-GENERATORS.forEach(g => {
-  const b = document.createElement('button'); b.className = 'item';
-  b.innerHTML = `<span class="ico">${g.icon}</span><span class="txt"><b>${g.name}</b><small>+${fmt(g.cps)} Kamas/s chacun</small></span><span class="side"><span class="owned"></span><span class="price"></span></span>`;
-  b.onclick = () => { const c = cost(g); if (S.kamas >= c) { S.kamas -= c; S.gens[g.id] = count(g.id)+1; update(); } };
-  $('gens').appendChild(b); g.el = b;
-});
-UPGRADES.forEach(u => {
-  const b = document.createElement('button'); b.className = 'item';
-  b.innerHTML = `<span class="txt"><b>${u.name}</b><small>${u.desc}</small></span><span class="side"><span class="price">${fmt(u.cost)}</span></span>`;
-  b.onclick = () => { if (!has(u.id) && S.kamas >= u.cost) { S.kamas -= u.cost; S.ups[u.id] = true; update(); } };
-  $('ups').appendChild(b); u.el = b;
-});
-
-function update(){
-  $('kamas').textContent = fmt(Math.floor(S.kamas)) + ' Kamas';
-  $('cps').textContent = fmt(cps()) + ' Kamas/s';
-  $('info').textContent = 'Chaque coup rapporte ' + fmt(clickValue()) + ' Kamas';
-  GENERATORS.forEach(g => {
-    const c = cost(g);
-    g.el.querySelector('.owned').textContent = count(g.id);
-    g.el.querySelector('.price').textContent = fmt(c);
-    g.el.disabled = S.kamas < c;
-  });
-  UPGRADES.forEach(u => {
-    u.el.style.display = (!has(u.id) && S.total >= u.cost/2) ? '' : 'none';
-    u.el.disabled = S.kamas < u.cost;
-  });
-}
-
-$('monster').addEventListener('click', e => {
-  const v = clickValue(); S.kamas += v; S.total += v;
-  const f = document.createElement('div'); f.className = 'float';
-  f.textContent = '+' + fmt(v); f.style.left = e.clientX + 'px'; f.style.top = (e.clientY - 20) + 'px';
-  document.body.appendChild(f); setTimeout(() => f.remove(), 800);
-  update();
-});
-
-let last = Date.now();
-setInterval(() => {
-  const now = Date.now(), g = cps() * (now - last)/1000; last = now;
-  S.kamas += g; S.total += g; update();
-}, 100);
-
-function save(){ S.last = Date.now(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch(e) {} }
-setInterval(save, 5000);
-addEventListener('beforeunload', save);
-
-$('reset').onclick = () => {
-  if (confirm('Effacer toute ta progression ?')) {
-    try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
-    location.reload();
-  }
-};
-update();
-</script>
+  <footer id="chars"></footer>
+</div>
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
 </body>
 </html>
