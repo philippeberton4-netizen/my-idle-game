@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cookie Idle</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      text-align: center;
+      background: #fdf6ec;
+      color: #4a2c10;
+      margin: 0;
+      padding: 2rem 1rem;
+    }
+    #count { font-size: 3rem; font-weight: 700; }
+    #rate { color: #8a6a4a; margin-bottom: 2rem; }
+    #cookie {
+      font-size: 10rem;
+      line-height: 1;
+      background: none;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.08s;
+    }
+    #cookie:active { transform: scale(0.92); }
+  </style>
+</head>
+<body>
+  <div id="count">0 cookie</div>
+  <div id="rate">+1 cookie par seconde</div>
+  <button id="cookie" aria-label="Cliquer sur le cookie">🍪</button>
+
+  <script>
+    // --- Paramètres du jeu ---
+    const perClick = 1;     // cookies gagnés par clic
+    const perSecond = 1;    // cookies gagnés par seconde
+
+    // --- État du jeu ---
+    let cookies = 0;
+    let last = Date.now();
+
+    // Charger la sauvegarde (si elle existe)
+    try {
+      const saved = localStorage.getItem('cookies');
+      if (saved) cookies = parseFloat(saved) || 0;
+    } catch (e) {}
+
+    const countEl = document.getElementById('count');
+
+    // Afficher le nombre de cookies (arrondi à l'entier inférieur)
+    function render() {
+      const n = Math.floor(cookies);
+      countEl.textContent = n.toLocaleString('fr-FR') + (n > 1 ? ' cookies' : ' cookie');
+    }
+
+    // Clic sur le cookie
+    document.getElementById('cookie').addEventListener('click', () => {
+      cookies += perClick;
+      render();
+    });
+
+    // Production automatique : on se base sur le temps réel écoulé
+    setInterval(() => {
+      const now = Date.now();
+      cookies += perSecond * (now - last) / 1000;
+      last = now;
+      render();
+    }, 100);
+
+    // Sauvegarde automatique toutes les 5 secondes
+    setInterval(() => {
+      try { localStorage.setItem('cookies', cookies); } catch (e) {}
+    }, 5000);
+
+    render();
+  </script>
+</body>
+</html>
